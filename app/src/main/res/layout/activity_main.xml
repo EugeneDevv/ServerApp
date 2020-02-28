@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@drawable/bg"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_centerInParent="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:layout_marginTop="150dp"
+            android:src="@drawable/logo"
+            android:layout_width="200dp"
+            android:layout_height="200dp" />
+        <TextView
+            android:layout_marginTop="30dp"
+            android:gravity="center"
+            android:id="@+id/txtSlogan"
+            android:text="@string/slogan"
+            android:textColor="@android:color/white"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:weightSum="2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+
+        <info.hoang8f.widget.FButton
+            android:id="@+id/signin"
+            android:text="Let's Go"
+            android:textColor="@android:color/white"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:shadowColor="@android:color/black"
+            android:layout_margin="8dp"
+            app:fButtonColor="@color/fbutton_color_transparent"
+            app:shadowEnabled="true"
+            app:shadowHeight="5dp"
+            app:cornerRadius="5dp"
+            android:layout_alignParentBottom="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+
+
+</RelativeLayout>
