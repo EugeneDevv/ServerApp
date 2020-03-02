@@ -41,7 +41,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                     <TextView
-                        android:id="@+id/order_id"
+                        android:id="@+id/order_id_report"
                         android:layout_marginLeft="10dp"
                         android:layout_gravity="center_vertical|start"
                         android:textAllCaps="true"
@@ -61,7 +61,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                     <TextView
-                        android:id="@+id/userName"
+                        android:id="@+id/userName_report"
                         android:layout_marginLeft="10dp"
                         android:layout_gravity="center_vertical|start"
                         android:textAllCaps="true"
@@ -81,7 +81,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                     <TextView
-                        android:id="@+id/order_phone"
+                        android:id="@+id/order_phone_report"
                         android:layout_marginLeft="10dp"
                         android:layout_gravity="center_vertical|start"
                         android:textAllCaps="true"
@@ -101,7 +101,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                     <TextView
-                        android:id="@+id/order_address"
+                        android:id="@+id/order_address_report"
                         android:layout_marginLeft="10dp"
                         android:layout_gravity="center_vertical|start"
                         android:textAllCaps="true"
@@ -121,7 +121,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                     <TextView
-                        android:id="@+id/paymentMethod"
+                        android:id="@+id/paymentMethod_report"
                         android:layout_marginLeft="10dp"
                         android:layout_gravity="center_vertical|start"
                         android:textAllCaps="true"
@@ -141,7 +141,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                     <TextView
-                        android:id="@+id/paymentState"
+                        android:id="@+id/paymentState_report"
                         android:layout_marginLeft="10dp"
                         android:layout_gravity="center_vertical|start"
                         android:textAllCaps="true"
@@ -157,16 +157,16 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal" >
                     <TextView
-                        android:text="Comment:"
+                        android:text="Date:"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                     <TextView
-                        android:id="@+id/order_comment"
+                        android:id="@+id/order_date_report"
                         android:layout_marginLeft="10dp"
                         android:layout_gravity="center_vertical|start"
                         android:textAllCaps="true"
                         android:textStyle="italic"
-                        android:text="Comment"
+                        android:text="Date"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -181,7 +181,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                     <TextView
-                        android:id="@+id/totalAmount"
+                        android:id="@+id/totalAmount_report"
                         android:layout_marginLeft="10dp"
                         android:layout_gravity="center_vertical|start"
                         android:textAllCaps="true"

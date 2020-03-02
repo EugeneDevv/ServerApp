@@ -34,16 +34,16 @@ public class OrderDetail extends AppCompatActivity {
                 .build());
         setContentView(R.layout.activity_order_detail);
 
-        order_id=(TextView)findViewById(R.id.order_id);
-        order_phone=(TextView)findViewById(R.id.order_phone);
-        order_address=(TextView)findViewById(R.id.order_address);
-        order_total=(TextView)findViewById(R.id.totalAmount);
-        order_comment=(TextView)findViewById(R.id.order_comment);
-        user_name=(TextView)findViewById(R.id.userName);
-        payMode=(TextView)findViewById(R.id.paymentMethod);
-        payState=(TextView)findViewById(R.id.paymentState);
+        order_id= findViewById(R.id.order_id_report);
+        order_phone= findViewById(R.id.order_phone_report);
+        order_address= findViewById(R.id.order_address_report);
+        order_total= findViewById(R.id.totalAmount_report);
+     //   order_comment= findViewById(R.id.order_comment_report);
+        user_name= findViewById(R.id.userName_report);
+        payMode= findViewById(R.id.paymentMethod_report);
+        payState= findViewById(R.id.paymentState_report);
 
-        lstfoods=(RecyclerView)findViewById(R.id.lstFoods);
+        lstfoods= findViewById(R.id.lstFoods);
         lstfoods.setHasFixedSize(true);
         layoutManager=new LinearLayoutManager(this);
         lstfoods.setLayoutManager(layoutManager);
@@ -57,7 +57,7 @@ public class OrderDetail extends AppCompatActivity {
         order_phone.setText(Common.currentRequest.getPhone());
         order_address.setText(Common.currentRequest.getAddress());
         order_total.setText(Common.currentRequest.getTotal());
-        order_comment.setText(Common.currentRequest.getComment());
+        //order_comment.setText(Common.currentRequest.getComment());
         payMode.setText(Common.currentRequest.getPaymentMethod());
         payState.setText(Common.currentRequest.getPaymentState());
 
