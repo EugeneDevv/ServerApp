@@ -9,7 +9,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.net.Uri;
+import android.graphics.pdf.PdfDocument;
+import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -17,50 +18,49 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.LruCache;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
-import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.thunderbolt_108.serverapp.Common.Common;
 import com.example.thunderbolt_108.serverapp.Model.Request;
-import com.example.thunderbolt_108.serverapp.ViewHolder.OrderViewHolder;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
-import com.google.firebase.database.core.Context;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Image;
-import com.itextpdf.text.PageSize;
-import com.itextpdf.text.pdf.PdfWriter;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 public class Reports extends AppCompatActivity {
     private TextView textViewFilters;
     private RecyclerView recyclerViewFilters;
+    private ScrollView clReport;
+    private Bitmap bitmap;
     RecyclerView.LayoutManager layoutManager;
     FloatingActionButton fbExport;
     private static final int PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 2;
@@ -73,12 +73,17 @@ public class Reports extends AppCompatActivity {
     private Calendar mFromDate,mToDate;
     FirebaseRecyclerAdapter<Request,ReportsAdapter.MyViewHolder> adapter;
     private SimpleDateFormat sdf;
+    private Date fromTimeMillis;
+    private Date toTimeMillis;
+    private List<Request> spinnerUsersList;
+    private List<String> spinnerUsers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reports);
         textViewFilters= findViewById(R.id.textViewFilters);
+        clReport = findViewById(R.id.clRepor);
         recyclerViewFilters = findViewById(R.id.recyclerViewFilters);
         db=FirebaseDatabase.getInstance();
         query=db.getReference("Requests");
@@ -140,14 +145,25 @@ public class Reports extends AppCompatActivity {
                 dialog.show();
             }
         });
-        DevicePermission();
         fbExport.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                generatePDF(recyclerViewFilters);
+                textViewFilters.setVisibility(View.GONE);
+                //fbExport.setVisibility(View.GONE);
+              //  bitmap = loadBitmapFromView(llScroll, llScroll.getWidth(), llScroll.getHeight());
+                Log.d("size"," "+clReport.getWidth() +"  "+clReport.getWidth());
+                bitmap = loadBitmapFromView(recyclerViewFilters, recyclerViewFilters.getWidth(), recyclerViewFilters.getHeight());
+               DevicePermission();
             }
         });
 
+    }
+    public static Bitmap loadBitmapFromView(View v, int width, int height) {
+        Bitmap b = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(b);
+        v.draw(c);
+
+        return b;
     }
 
     private void dateAndUserFilters() {
@@ -212,15 +228,10 @@ public class Reports extends AppCompatActivity {
                         mFromDate.set(Calendar.YEAR,year);
                         mFromDate.set(Calendar.MONTH,month);
                         mFromDate.set(Calendar.DAY_OF_MONTH,day);
-
                         fromDate.setText(sdf.format(mFromDate.getTime()));
-                        query = FirebaseDatabase.getInstance()
-                                .getReference()
-                                .child("Requests")
-                                .orderByChild("date")
-                                .startAt(sdf.format(mFromDate.getTime()))
-                                .endAt(sdf.format(mToDate.getTime()));
-                        loadOrders();
+                        fromTimeMillis = mFromDate.getTime();
+                        toTimeMillis = mToDate.getTime();
+                        //This method returns the time in millis
                     }
                 };
                 new DatePickerDialog(Reports.this,fDate, mFromDate.get(Calendar.YEAR), mFromDate.get(Calendar.MONTH), mFromDate.get(Calendar.DAY_OF_MONTH)).show();
@@ -253,142 +264,179 @@ public class Reports extends AppCompatActivity {
                 .setPositiveButton("Apply", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
+                        if (fromDate.getText().toString().equals("From date") || toDate.getText().toString().equals("To date")){
+                            Toast.makeText(Reports.this, "Please select a valid date", Toast.LENGTH_SHORT).show();
+                        }
+                        else {
+                        long timeMilliFrom = fromTimeMillis.getTime();
+                        long timeMilliTo = toTimeMillis.getTime();
+                        query = FirebaseDatabase.getInstance()
+                                .getReference()
+                                .child("Requests")
+                                .orderByKey()
+                                .startAt(String.valueOf(timeMilliFrom))
+                                .endAt(String.valueOf(timeMilliTo));
+                        loadOrders();
+                    }
                     }
                 })
                 .setNegativeButton("Cancel",null);
+        dialogDates.setCancelable(false);
         dialogDates.setView(layout);
         dialogDates.show();
     }
 
     private void userFilters() {
         getUsers();
-        query = FirebaseDatabase.getInstance()
-                .getReference()
-                .child("Requests")
-                .orderByChild("name")
-                .equalTo(username);
+
     }
 
     private void getUsers() {
-        List<String> spinnerUsers =  new ArrayList<>();
-        spinnerUsers.add("Alan");
-        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        final Spinner usernameBox = new Spinner(this);
-        ArrayAdapter<String> userAdapter = new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,spinnerUsers);
-        userAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        usernameBox.setAdapter(userAdapter);
-        layout.addView(usernameBox);
-        dialog.setTitle("Username")
-                .setPositiveButton("Apply", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
+        spinnerUsersList = new ArrayList<>();
+        spinnerUsers = new ArrayList<>();
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Requests");
+        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot requestSnapshot: dataSnapshot.getChildren()) {
+                    if (requestSnapshot.exists()){
+                        Request request = requestSnapshot.getValue(Request.class);
+                        //Request mp = spinnerUsersList.get(0);
+                            spinnerUsersList.add(request);
                     }
-                })
-                .setNegativeButton("Cancel", null);
-        dialog.setView(layout);
-        dialog.show();
+                }
+                int size = spinnerUsersList.size();
+                if (size!=0){
+                    int size1;
+                    for (size1=0;size1<size;size1++){
+                        Request request = spinnerUsersList.get(size1);
+                        username = request.getName();
+                        if (username!=null){
+                            spinnerUsers.add(username);
+                        }
+                    }
+                    AlertDialog.Builder dialog = new AlertDialog.Builder(Reports.this);
+                    LinearLayout layout = new LinearLayout(Reports.this);
+                    layout.setOrientation(LinearLayout.VERTICAL);
+                    final Spinner usernameBox = new Spinner(Reports.this);
+                    ArrayAdapter<String> userAdapter = new ArrayAdapter<>(Reports.this,android.R.layout.simple_spinner_dropdown_item, spinnerUsers);
+                    userAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    usernameBox.setAdapter(userAdapter);
+                    layout.addView(usernameBox);
+                    dialog.setTitle("Username")
+                            .setPositiveButton("Apply", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    query = FirebaseDatabase.getInstance()
+                                            .getReference()
+                                            .child("Requests")
+                                            .orderByChild("name")
+                                            .equalTo(usernameBox.getSelectedItem().toString());
+                                    loadOrders();
+                                }
+                            })
+                            .setNegativeButton("Cancel", null);
+                    dialog.setView(layout);
+                    dialog.show();
+                }
+                else {
+                    Toast.makeText(Reports.this, "Database is empty", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                throw databaseError.toException(); // don't ignore errors
+            }
+        });
     }
 
     private void dateFilters() {
        selectDates();
     }
 
-    public void generatePDF(RecyclerView view) {
-        RecyclerView.Adapter adapter = view.getAdapter();
-        Bitmap bigBitmap = null;
-        if (adapter != null) {
-            int size = adapter.getItemCount();
-            int height = 0;
-            Paint paint = new Paint();
-            int iHeight = 0;
-            final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+    public void generatePDF() {
+       // WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        //  Display display = wm.getDefaultDisplay();
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        this.getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+        float hight = displaymetrics.heightPixels ;
+        float width = displaymetrics.widthPixels ;
 
-            // Use 1/8th of the available memory for this memory cache.
-            final int cacheSize = maxMemory / 8;
-            LruCache<String, Bitmap> bitmaCache = new LruCache<>(cacheSize);
-            for (int i = 0; i < size; i++) {
-                RecyclerView.ViewHolder holder = adapter.createViewHolder(view, adapter.getItemViewType(i));
-                adapter.onBindViewHolder(holder, i);
-                holder.itemView.measure(View.MeasureSpec.makeMeasureSpec(view.getWidth(), View.MeasureSpec.EXACTLY),
-                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-                holder.itemView.layout(0, 0, holder.itemView.getMeasuredWidth(), holder.itemView.getMeasuredHeight());
-                holder.itemView.setDrawingCacheEnabled(true);
-                holder.itemView.buildDrawingCache();
-                Bitmap drawingCache = holder.itemView.getDrawingCache();
-                if (drawingCache != null) {
+        int convertHighet = (int) hight, convertWidth = (int) width;
 
-                    bitmaCache.put(String.valueOf(i), drawingCache);
-                }
+//        Resources mResources = getResources();
+//        Bitmap bitmap = BitmapFactory.decodeResource(mResources, R.drawable.screenshot);
 
-                height += holder.itemView.getMeasuredHeight();
-            }
+        PdfDocument document = new PdfDocument();
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(convertWidth, convertHighet, 1).create();
+        PdfDocument.Page page = document.startPage(pageInfo);
 
-            bigBitmap = Bitmap.createBitmap(view.getMeasuredWidth(), height, Bitmap.Config.ARGB_8888);
-            Canvas bigCanvas = new Canvas(bigBitmap);
-            bigCanvas.drawColor(Color.WHITE);
+        Canvas canvas = page.getCanvas();
 
-            Document document = new Document(PageSize.A4);
-            final File file = new File(Environment.getExternalStorageDirectory().toString() + "/Download");
-            file.mkdirs();
-            final File fileSave = new File(file, "OrdersReport.pdf");
-            try {
-                PdfWriter.getInstance(document, new FileOutputStream(fileSave));
-            } catch (DocumentException | FileNotFoundException e) {
-                e.printStackTrace();
-            }
+        Paint paint = new Paint();
+        canvas.drawPaint(paint);
 
-            for (int i = 0; i < size; i++) {
+        bitmap = Bitmap.createScaledBitmap(bitmap, convertWidth, convertHighet, true);
 
-                try {
-                    //Adding the content to the document
-                    Bitmap bmp = bitmaCache.get(String.valueOf(i));
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                    Image image = Image.getInstance(stream.toByteArray());
-                    float scaler = ((document.getPageSize().getWidth() - document.leftMargin()
-                            - document.rightMargin() - 0) / image.getWidth()) * 100; // 0 means you have no indentation. If you have any, change it.
-                    image.scalePercent(scaler);
-                    image.setAlignment(com.itextpdf.text.Image.ALIGN_CENTER | com.itextpdf.text.Image.ALIGN_TOP);
-                    if (!document.isOpen()) {
-                        document.open();
-                    }
-                    document.add(image);
+        paint.setColor(Color.BLUE);
+        canvas.drawBitmap(bitmap, 0, 0 , null);
+        document.finishPage(page);
 
-                } catch (Exception ex) {
-                    Log.e("TAG-ORDER PRINT ERROR", ex.getMessage());
-                }
-            }
+        // write the document content
+        File sd = Environment.getExternalStorageDirectory();
+        //String backupDBPath = "TasteServer/Bizwiz.pdf";
+      //  File backupDB = new File(sd, backupDBPath);
+        File dir = new File(Environment.getExternalStorageDirectory().toString() + "/TasteServer");
+        Random random = new Random();
+        int randomNumber = random.nextInt(80-65);
+        dir.mkdir();
+        String targetPdf =  "Report";
+        //File filePath;
+       // filePath = new File(targetPdf);
+        try {
+            document.writeTo(new FileOutputStream(createFile(targetPdf)));
 
-            if (document.isOpen()) {
-                document.close();
-            }
-            // Set on UI Thread
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Reports.this);
-                    builder.setTitle("Success")
-                            .setMessage("PDF File Generated Successfully.")
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int whichButton) {
-                                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                                    intent.setDataAndType(Uri.fromFile(fileSave), "application/pdf");
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                                    startActivity(intent);
-                                }
-
-                            }).show();
-                }
-            });
-
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Something wrong: " + e.toString(), Toast.LENGTH_LONG).show();
         }
 
+        // close the document
+        document.close();
+        textViewFilters.setVisibility(View.VISIBLE);
+        Toast.makeText(this, "PDF created successfully!!!", Toast.LENGTH_SHORT).show();
+
+        openGeneratedPDF();
+
+    }
+    int num = 0;
+
+    public File createFile(String prefix) {
+        String filename = prefix + "(" + num + ").pdf";  //create the correct filename
+        File myFile = new File(Environment.getExternalStorageDirectory() + "/TasteServer", filename);
+        try {
+            if (!myFile.exists()) {
+                myFile.createNewFile();
+            } else {
+                ++num;               //increase the file index
+                createFile(prefix);  //simply call this method again with the same prefix
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        return myFile;
+    }
+    private void openGeneratedPDF(){
+        File dir = new File(Environment.getExternalStorageDirectory().toString() + "/TasteServer");
+      //  File file = new File("/sdcard/pdffromScroll.pdf");
+        if (dir.exists())
+        {
+
+                Toast.makeText(Reports.this, "File stored in " + dir, Toast.LENGTH_LONG).show();
+
+        }
     }
     private void DevicePermission() {
         /*
@@ -397,12 +445,13 @@ public class Reports extends AppCompatActivity {
          * onRequestPermissionsResult.
          */
         if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.READ_EXTERNAL_STORAGE)
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED) {
             mDevicePermissionGranted = true;
+            generatePDF();
         } else {
             ActivityCompat.requestPermissions(this,
-                    new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
         }
     }
@@ -418,6 +467,10 @@ public class Reports extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mDevicePermissionGranted = true;
+                    generatePDF();
+                }
+                else {
+                    Toast.makeText(Reports.this,"Device permission denied",Toast.LENGTH_LONG).show();
                 }
             }
             break;
